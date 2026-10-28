@@ -1,44 +1,51 @@
-const {exec, spawn, fork} = require('child_process')
+const { exec, spawn, fork } = require('child_process')
 
-// Exec
-exec('dir /A', (error, stdout, stderr) => {
-    if (error) return console.error(`Exec error: ${error}`)
-    if (stderr) console.error(`stder: ${stderr}`)
-    console.log(`stdout: ${stdout}`)
-    console.log("Procés finalitzat amb normalitat")
-    process.exit(0)
+// EXEC
+const comanda = process.platform === 'win32' ? 'dir' : 'ls -la'
+
+exec(comanda, (error, stdout, stderr) => {
+    console.log('\n--- EXEC ---')
+
+    if (stdout) console.log(stdout)
+    if (stderr) console.error(stderr)
+
+    if (error) {
+        console.log('Ha fallat. Codi:', error.code)
+    } else {
+        console.log('Ha acabat be. Codi: 0')
+    }
 })
 
-// Spawn
-const timer = spawn("node", ["timer-stdout.js"])
+// SPAWN
+const fillSpawn = spawn('node', ['timer-stdout.js'])
 
-timer.stdout.on("data", (data) => {
-    console.log(`stodout:\n ${data}`)
+fillSpawn.stdout.on('data', (dades) => {
+    process.stdout.write(`[spawn] ${dades}`)
 })
 
-timer.stderr.on("data", (data) => {
-    console.log(`stoderr:\n ${data}`)
-    process.exit(0)
+fillSpawn.stderr.on('data', (dades) => {
+    process.stderr.write(`[spawn stderr] ${dades}`)
 })
 
-timer.on("error", (error) => {
-    console.error(`error: ${error.message}`)
+fillSpawn.on('error', (error) => {
+    console.error('Error al spawn:', error.message)
 })
 
-timer.on("close", (code) => {
-    console.log(`child process salida: ${code}`)
+fillSpawn.on('close', (codi) => {
+    console.log('Spawn acabat. Codi:', codi)
 })
 
+// FORK
+const fillFork = fork('timer-ipc.js')
 
-// Fork
-const process = fork("./timer-ipc.js")
-
-process.send({hello: "Hello World"})
-
-process.on("message", (msg) => {
-    console.log("Parent, child says:", msg)
+fillFork.on('message', (missatge) => {
+    console.log('[fork]', missatge)
 })
 
-process.on("exit", (code) => {
-    console.log(`Tancat ${code}`)
+fillFork.on('error', (error) => {
+    console.error('Error al fork:', error.message)
+})
+
+fillFork.on('close', (codi) => {
+    console.log('Fork acabat. Codi:', codi)
 })

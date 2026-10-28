@@ -1,7 +1,11 @@
-setTimeout(() => {
-    process.on("message", (msg) => {
-        console.log("Child recievd", msg)
-        process.send({reply: "Hello from child"})   
-        process.exit(0)
-    })
-}, 4000);
+let n = 0
+
+const interval = setInterval(() => {
+    n++
+    process.send({ type: 'tick', n })
+
+    if (n === 5) {
+        clearInterval(interval)
+        process.send({ type: 'done' }, () => process.exit(0))
+    }
+}, 4000)
